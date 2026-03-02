@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+
+  # ── Base de datos de usuarios ──────────────────────────────────
+  auth-db:
+    image: postgres:16-alpine
+    container_name: auth-db
+    environment:
+      POSTGRES_USER: authuser
+      POSTGRES_PASSWORD: authpass
+      POSTGRES_DB: authdb
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authuser -d authdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Base de datos de tareas ────────────────────────────────────
+  tasks-db:
+    image: postgres:16-alpine
+    container_name: tasks-db
+    environment:
+      POSTGRES_USER: tasksuser
+      POSTGRES_PASSWORD: taskspass
+      POSTGRES_DB: tasksdb
+    volumes:
+      - tasks-db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasksuser -d tasksdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Message broker ─────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # puerto de mensajería
+      - "15672:15672" # panel de administración web
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Auth Service ───────────────────────────────────────────────
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      JWT_SECRET: taskflow_super_secret_key
+      DB_HOST: auth-db
+      DB_PORT: 5432
+      DB_USER: authuser
+      DB_PASSWORD: authpass
+      DB_NAME: authdb
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+    restart: unless-stopped
+
+  # ── Notifications Service ──────────────────────────────────────
+  notifications-service:
+    build: ./notifications-service
+    container_name: notifications-service
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+    restart: unless-stopped
+
+# ── Volúmenes — persisten datos aunque el contenedor se elimine ──
+volumes:
+  auth-db-data:
+  tasks-db-data:
+
+# ── Red interna — los servicios se hablan por nombre ─────────────
+networks:
+  taskflow-network:
+    driver: bridge
