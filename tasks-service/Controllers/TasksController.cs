@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TasksService.Data;
 using TasksService.DTOs;
 using TasksService.Models;
+using TasksService.Services;
 
 namespace TasksService.Controllers;
 
@@ -12,11 +13,13 @@ public class TasksController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly ILogger<TasksController> _logger;
+    private readonly RabbitMQPublisher _publisher;
 
-    public TasksController(AppDbContext db, ILogger<TasksController> logger)
+    public TasksController(AppDbContext db, ILogger<TasksController> logger, RabbitMQPublisher publisher)
     {
         _db = db;
         _logger = logger;
+        _publisher = publisher;
     }
 
     // GET /tasks?userId=1
@@ -60,6 +63,8 @@ public class TasksController : ControllerBase
 
         _db.Tasks.Add(task);
         await _db.SaveChangesAsync();
+
+        await _publisher.PublishTaskCreated(task.Id, task.Title, task.UserId);
 
         _logger.LogInformation("Tarea creada: {TaskId} por usuario {UserId}", task.Id, task.UserId);
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TasksService.Data;
+using TasksService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<RabbitMQPublisher>();
 
 var app = builder.Build();
 

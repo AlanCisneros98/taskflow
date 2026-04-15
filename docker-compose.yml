@@ -100,8 +100,11 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:3002
       ConnectionStrings__DefaultConnection: "Host=tasks-db;Port=5432;Database=tasksdb;Username=tasksuser;Password=taskspass"
+      RABBITMQ_URL: amqp://admin:admin@rabbitmq:5672  
     depends_on:
       tasks-db:
+        condition: service_healthy
+      rabbitmq:                        
         condition: service_healthy
     networks:
       - taskflow-network
