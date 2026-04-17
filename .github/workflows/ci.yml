@@ -91,8 +91,8 @@ jobs:
           context: ./auth-service
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/taskflow-auth:latest
-            ghcr.io/${{ github.repository_owner }}/taskflow-auth:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-auth:latest
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-auth:${{ github.sha }}
           # github.sha es el hash del commit — cada imagen queda
           # taggeada con el commit exacto que la generó
 
@@ -102,8 +102,8 @@ jobs:
           context: ./tasks-service
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/taskflow-tasks:latest
-            ghcr.io/${{ github.repository_owner }}/taskflow-tasks:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-tasks:latest
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-tasks:${{ github.sha }}
 
       - name: Build y push notifications-service
         uses: docker/build-push-action@v5
@@ -111,8 +111,8 @@ jobs:
           context: ./notifications-service
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/taskflow-notifications:latest
-            ghcr.io/${{ github.repository_owner }}/taskflow-notifications:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-notifications:latest
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-notifications:${{ github.sha }}
 
       - name: Build y push api-gateway
         uses: docker/build-push-action@v5
@@ -120,15 +120,15 @@ jobs:
           context: ./api-gateway
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/taskflow-gateway:latest
-            ghcr.io/${{ github.repository_owner }}/taskflow-gateway:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-gateway:latest
+            ghcr.io/${{ github.repository_owner | lower }}/taskflow-gateway:${{ github.sha }}
 
       - name: Resumen del pipeline
         run: |
           echo "## 🚀 Deploy exitoso" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Imágenes publicadas:**" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ github.repository_owner }}/taskflow-auth:latest" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ github.repository_owner }}/taskflow-tasks:latest" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ github.repository_owner }}/taskflow-notifications:latest" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ github.repository_owner }}/taskflow-gateway:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository_owner | lower }}/taskflow-auth:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository_owner | lower }}/taskflow-tasks:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository_owner | lower }}/taskflow-notifications:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository_owner | lower }}/taskflow-gateway:latest" >> $GITHUB_STEP_SUMMARY
