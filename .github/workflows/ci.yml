@@ -67,18 +67,16 @@ jobs:
   build-and-push:
     name: 🐳 Build & Push Docker Images
     runs-on: ubuntu-latest
-    # Solo corre si los dos jobs de tests pasaron
     needs: [test-auth-service, test-tasks-service]
-    # Solo en push a main, no en pull requests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_PREFIX: ghcr.io/${{ github.repository }}
 
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
-
-      - name: Convertir owner a lowercase
-        id: owner
-        run: echo "name=$(echo '${{ steps.owner.outputs.name }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Login a GitHub Container Registry
         uses: docker/login-action@v3
@@ -86,8 +84,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          # GITHUB_TOKEN es un token automático que GitHub genera
-          # para cada workflow — no necesitas configurar nada
 
       - name: Build y push auth-service
         uses: docker/build-push-action@v5
@@ -95,10 +91,8 @@ jobs:
           context: ./auth-service
           push: true
           tags: |
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-auth:latest
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-auth:${{ github.sha }}
-          # github.sha es el hash del commit — cada imagen queda
-          # taggeada con el commit exacto que la generó
+            ghcr.io/${{ github.repository }}-auth:latest
+            ghcr.io/${{ github.repository }}-auth:${{ github.sha }}
 
       - name: Build y push tasks-service
         uses: docker/build-push-action@v5
@@ -106,8 +100,8 @@ jobs:
           context: ./tasks-service
           push: true
           tags: |
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-tasks:latest
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-tasks:${{ github.sha }}
+            ghcr.io/${{ github.repository }}-tasks:latest
+            ghcr.io/${{ github.repository }}-tasks:${{ github.sha }}
 
       - name: Build y push notifications-service
         uses: docker/build-push-action@v5
@@ -115,8 +109,8 @@ jobs:
           context: ./notifications-service
           push: true
           tags: |
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-notifications:latest
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-notifications:${{ github.sha }}
+            ghcr.io/${{ github.repository }}-notifications:latest
+            ghcr.io/${{ github.repository }}-notifications:${{ github.sha }}
 
       - name: Build y push api-gateway
         uses: docker/build-push-action@v5
@@ -124,15 +118,15 @@ jobs:
           context: ./api-gateway
           push: true
           tags: |
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-gateway:latest
-            ghcr.io/${{ steps.owner.outputs.name }}/taskflow-gateway:${{ github.sha }}
+            ghcr.io/${{ github.repository }}-gateway:latest
+            ghcr.io/${{ github.repository }}-gateway:${{ github.sha }}
 
       - name: Resumen del pipeline
         run: |
           echo "## 🚀 Deploy exitoso" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Imágenes publicadas:**" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ steps.owner.outputs.name }}/taskflow-auth:latest" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ steps.owner.outputs.name }}/taskflow-tasks:latest" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ steps.owner.outputs.name }}/taskflow-notifications:latest" >> $GITHUB_STEP_SUMMARY
-          echo "- ghcr.io/${{ steps.owner.outputs.name }}/taskflow-gateway:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository }}-auth:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository }}-tasks:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository }}-notifications:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- ghcr.io/${{ github.repository }}-gateway:latest" >> $GITHUB_STEP_SUMMARY
